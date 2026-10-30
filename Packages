@@ -1,0 +1,16 @@
+Package: com.ipabrowser.ipabrowser
+Name: IPA Browser
+Version: 1.0-3
+Architecture: iphoneos-arm
+Installed-Size: 116
+Description: Browse the IPA Archive and install apps directly on this device
+Maintainer: IPA Browser
+Author: IPA Browser
+Section: Utilities
+Suggests: python, curl, ca-certificates, com.autopear.installipa
+Filename: ./ipabrowser_1.0-3_iphoneos-arm.deb
+Size: 24958
+MD5sum: f49483e65fbfd4aae484ce309583fc45
+SHA1: c62f7c2126f5e1f8abba28fb5281fd6f5864edc5
+SHA256: 1b6e2e60b5c98d1a916a0ef7515a016acb3d0b7dffb90a7f551387181693c145
+

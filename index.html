@@ -1,0 +1,889 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
+<link rel="icon" href="icon.png">
+<link rel="apple-touch-icon" href="icon.png">
+<title>IPA Browser</title>
+<style>
+[hidden] { display: none !important; }
+* { -webkit-box-sizing: border-box; box-sizing: border-box; }
+html, body { margin: 0; padding: 0; }
+body { font-family: -apple-system, "Helvetica Neue", Helvetica, Arial, sans-serif; background: #efeff4; color: #111; font-size: 15px; -webkit-text-size-adjust: 100%; }
+#hdr { position: fixed; top: 0; left: 0; right: 0; z-index: 20; background: #f7f7f7; border-bottom: 1px solid #c8c7cc; padding: 8px; }
+#hdr .row { display: -webkit-flex; display: flex; }
+#hdr input[type=search] { -webkit-flex: 1; flex: 1; font-size: 16px; padding: 7px 9px; border: 1px solid #c8c7cc; border-radius: 8px; -webkit-appearance: none; background: #fff; min-width: 0; }
+.hbtn { font-size: 15px; margin-left: 6px; padding: 0 10px; border: 1px solid #c8c7cc; border-radius: 8px; background: #fff; color: #007aff; }
+#filters { padding-top: 8px; }
+#filters label { display: block; font-size: 12px; color: #666; margin: 6px 0 2px; }
+#filters input[type=text], #filters select { width: 100%; font-size: 16px; padding: 6px 8px; border: 1px solid #c8c7cc; border-radius: 8px; background: #fff; -webkit-appearance: none; }
+#filters .two { display: -webkit-flex; display: flex; }
+#filters .two > div { -webkit-flex: 1; flex: 1; padding-right: 6px; }
+#filters .chk { font-size: 14px; color: #111; margin-top: 10px; }
+#plistmsg { font-size: 12px; margin-top: 4px; color: #666; word-wrap: break-word; }
+#main { padding: 100px 0 30px; }
+#status { padding: 12px; color: #555; font-size: 14px; word-wrap: break-word; }
+#status.err { color: #c00; background: #fff0f0; border-bottom: 1px solid #f3b4b4; }
+#status button { margin-top: 6px; font-size: 15px; padding: 5px 12px; }
+#list { list-style: none; margin: 0; padding: 0; }
+.item { background: #fff; border-bottom: 1px solid #ddd; padding: 10px 10px 10px 68px; position: relative; min-height: 78px; }
+.item .ic, .item .ph { position: absolute; left: 10px; top: 10px; width: 48px; height: 48px; border-radius: 10px; }
+.item .ph { color: #fff; font-weight: bold; font-size: 24px; line-height: 48px; text-align: center; overflow: hidden; }
+.item .t { font-weight: bold; font-size: 16px; word-wrap: break-word; }
+.item .m { font-size: 12px; color: #777; margin: 2px 0 4px; word-wrap: break-word; }
+.btn { display: inline-block; font-size: 14px; padding: 6px 12px; margin: 4px 6px 0 0; border-radius: 7px; background: #007aff; color: #fff; text-decoration: none; border: 0; }
+.btn.g { background: #34c759; }
+.btn.o { background: #fff; color: #007aff; border: 1px solid #007aff; padding: 5px 11px; }
+.btn.dis { background: #aaa; }
+.pager { display: -webkit-flex; display: flex; -webkit-align-items: center; align-items: center; -webkit-justify-content: center; justify-content: center; padding: 10px; font-size: 14px; }
+.pager button { font-size: 15px; padding: 6px 12px; margin: 0 6px; }
+.pager span { margin: 0 4px; }
+#count { padding: 6px 12px; font-size: 13px; color: #666; }
+.job { margin-top: 4px; }
+.jt { font-size: 13px; color: #333; margin: 4px 0; word-wrap: break-word; }
+.jt.ok { color: #1a7f37; }
+.jt.bad { color: #c00; }
+.pb { height: 8px; background: #ddd; border-radius: 4px; overflow: hidden; margin: 4px 0; }
+.pb div { height: 8px; background: #34c759; }
+#repo { background: #fffbe6; border-bottom: 1px solid #e6d98f; padding: 10px 12px; font-size: 13px; }
+#repo ol { margin: 6px 0 4px; padding-left: 20px; }
+#repo li { margin-bottom: 6px; }
+#repo input { display: block; width: 100%; font-size: 14px; padding: 6px; margin-top: 4px; border: 1px solid #c8c7cc; border-radius: 6px; background: #fff; }
+#hdr { padding-top: calc(8px + env(safe-area-inset-top, 0px)); }
+@media (prefers-color-scheme: dark) {
+  body { background: #000; color: #eee; }
+  #hdr, #dbg { background: #1c1c1e; border-color: #38383a; }
+  .item { background: #1c1c1e; border-color: #38383a; }
+  .item .m, #count, .jt, #status { color: #aaa; }
+  #hdr input, #filters input, #filters select, .hbtn, .btn.o, #repo input { background: #2c2c2e; color: #eee; border-color: #48484a; }
+  #repo { background: #2b2600; border-color: #6b5d00; color: #eee; }
+  .pb { background: #3a3a3c; }
+}
+#dbg { position: fixed; left: 0; right: 0; bottom: 0; height: 55%; z-index: 50; background: #111; color: #cfc; border-top: 2px solid #007aff; padding: 6px; }
+#dbg .bar { display: -webkit-flex; display: flex; -webkit-flex-wrap: wrap; flex-wrap: wrap; }
+#dbg .bar button { font-size: 12px; margin: 0 4px 4px 0; padding: 5px 8px; }
+#dbglog { width: 100%; height: -webkit-calc(100% - 64px); height: calc(100% - 64px); background: #000; color: #9f9; font-family: Menlo, Courier, monospace; font-size: 10px; border: 0; -webkit-appearance: none; resize: none; white-space: pre; overflow: scroll; -webkit-overflow-scrolling: touch; }
+</style>
+</head>
+<body>
+<div id="hdr">
+  <form id="searchform" action="#" onsubmit="return false;">
+    <div class="row">
+      <input id="search" type="search" placeholder="Cerca titolo, bundle o file…" autocapitalize="off" autocorrect="off" autocomplete="off">
+      <button type="button" class="hbtn" id="btnFilters">Filtri</button>
+      <button type="button" class="hbtn" id="btnDbg">Debug</button>
+    </div>
+  </form>
+  <div id="filters" hidden>
+    <div class="two">
+      <div><label for="device">Dispositivo</label>
+        <select id="device"><option value="">Qualsiasi</option><option value="1">iPhone</option><option value="2">iPad</option><option value="3">Apple TV</option><option value="4">Watch</option></select></div>
+      <div><label for="unique">Risultati</label>
+        <select id="unique"><option value="">Tutte le versioni</option><option value="true">Una per app</option></select></div>
+    </div>
+    <div class="two">
+      <div><label for="minos">iOS richiesto: da (es. 5.0)</label><input id="minos" type="text" autocapitalize="off" autocorrect="off"></div>
+      <div><label for="maxos">iOS richiesto: fino a (il tuo iOS)</label><input id="maxos" type="text" autocapitalize="off" autocorrect="off"></div>
+    </div>
+    <label for="bundleid">Bundle ID contiene</label>
+    <input id="bundleid" type="text" autocapitalize="off" autocorrect="off">
+    <label for="plistServer">Server installazione (es. http://192.168.1.10:8026/)</label>
+    <div class="row"><input id="plistServer" type="text" autocapitalize="off" autocorrect="off" style="-webkit-flex:1;flex:1"><button type="button" class="hbtn" id="btnPlist">Testa</button></div>
+    <div id="plistmsg"></div>
+    <button type="button" class="btn" id="btnApply" style="margin-top:10px">Cerca</button>
+    <button type="button" class="btn o" id="btnReset" style="margin-top:10px">Azzera</button>
+
+  </div>
+</div>
+
+<div id="main">
+  <noscript><div class="err" style="padding:12px;color:#c00">JavaScript è disattivato: la pagina non può funzionare.</div></noscript>
+  <div id="repo" hidden>
+    <b>📲 Vuoi installare le app direttamente sull’iPad?</b>
+    <ol>
+      <li>Su un iPad con jailbreak apri <b>Cydia → Sorgenti → Modifica → Aggiungi</b> e inserisci questo indirizzo:
+        <input id="repoUrl" type="text" readonly onfocus="this.select()"></li>
+      <li>Installa dalla sorgente il pacchetto <b>IPA Browser</b>. Se mancano, installa anche <b>Python</b>, <b>curl</b>, <b>ca-certificates</b>, <b>IPA Installer Console</b> e <b>AppSync Unified</b>.</li>
+      <li>Apri Safari su <b>http://127.0.0.1:8026/</b>: qui compare il pulsante <b>Installa</b>.</li>
+    </ol>
+    <button type="button" class="btn o" id="btnRepoHide">Nascondi</button>
+  </div>
+  <div id="status">Avvio…</div>
+  <div id="count"></div>
+  <div class="pager" id="pagerTop" hidden></div>
+  <ul id="list"></ul>
+  <div class="pager" id="pagerBottom" hidden></div>
+</div>
+
+<div id="dbg" hidden>
+  <div class="bar">
+    <button type="button" data-d="close">Chiudi</button>
+    <button type="button" data-d="select">Seleziona tutto</button>
+    <button type="button" data-d="clear">Svuota</button>
+    <button type="button" data-d="env">Info sistema</button>
+    <button type="button" data-d="selftest">Autotest dati</button>
+    <button type="button" data-d="linktest">Test 1° link</button>
+    <button type="button" data-d="reload">Ricarica dati</button>
+    <button type="button" data-d="svclog">Log servizio</button>
+  </div>
+  <div style="font-size:11px;color:#aaa;margin:0 0 4px">Tocca «Seleziona tutto», poi «Copia» nel menu di iOS e incolla il log nella chat.</div>
+  <textarea id="dbglog" readonly></textarea>
+</div>
+
+<script>
+(function () {
+'use strict';
+
+var APP_VERSION = '2.0';
+var PER_PAGE = 30;
+var UPSTREAM_BASES = ['https://ipaarchive.github.io/data/', 'https://relikd.github.io/ipa-archive/data/'];
+var DEVICE = false, STATUS = null, JOBS = {}, jobTimer = null, jobFails = 0;
+var DEFAULT_MAXOS = '9.3.6';
+
+var DB = [], URLS = {}, RESULTS = [], page = 0, DATA_BASE = '', READY = false;
+var PLIST = '', prevHash = '', loadToken = 0, searchToken = 0, imgErrs = 0;
+var T0 = new Date().getTime();
+var LOG = [], errCount = 0, dbgOpen = false;
+
+function $(id) { return document.getElementById(id); }
+function origin() { return location.protocol + '//' + location.host; }
+function isLocal() { return DATA_BASE === origin() + '/data/'; }
+function now() { return new Date().getTime(); }
+function esc(s) {
+  return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+}
+
+/* ------------------------------------------------------------------ *
+ * LOG / DEBUG
+ * ------------------------------------------------------------------ */
+function log(level, msg) {
+  var line = ((now() - T0) / 1000).toFixed(2) + 's ' + level + ' ' + msg;
+  LOG.push(line);
+  if (LOG.length > 800) { LOG.shift(); }
+  if (level === 'ERR') { errCount++; updateBadge(); }
+  if (dbgOpen) { renderLog(); }
+}
+function renderLog() {
+  var el = $('dbglog');
+  el.value = LOG.join('\n');
+  el.scrollTop = el.scrollHeight;
+}
+function updateBadge() {
+  $('btnDbg').innerHTML = errCount ? ('Debug (' + errCount + ' err)') : 'Debug';
+  $('btnDbg').style.color = errCount ? '#c00' : '#007aff';
+}
+function openDbg() { dbgOpen = true; $('dbg').hidden = false; renderLog(); }
+function closeDbg() { dbgOpen = false; $('dbg').hidden = true; }
+
+(function hookConsole() {
+  if (!window.console) { return; }
+  var names = ['log', 'warn', 'error'];
+  for (var k = 0; k < names.length; k++) {
+    (function (name) {
+      var orig = window.console[name];
+      window.console[name] = function () {
+        var parts = [];
+        for (var i = 0; i < arguments.length; i++) { parts.push(String(arguments[i])); }
+        log(name === 'error' ? 'ERR' : (name === 'warn' ? 'WARN' : 'LOG'), 'console.' + name + ': ' + parts.join(' '));
+        try { if (orig) { orig.apply(window.console, arguments); } } catch (e) { /* ignora */ }
+      };
+    })(names[k]);
+  }
+})();
+
+window.onerror = function (msg, src, line, col, err) {
+  log('ERR', 'JS non gestito: ' + msg + ' @' + String(src || '').split('/').pop() + ':' + line + ':' + col +
+      (err && err.stack ? '\n' + String(err.stack).split('\n').slice(0, 4).join('\n') : ''));
+  return false;
+};
+
+function envInfo() {
+  log('INFO', 'IPA Browser ' + APP_VERSION);
+  log('INFO', 'UA: ' + navigator.userAgent);
+  log('INFO', 'Schermo ' + screen.width + 'x' + screen.height + ' @' + (window.devicePixelRatio || 1) + 'x, finestra ' + window.innerWidth + 'x' + window.innerHeight);
+  log('INFO', 'Pagina: ' + location.href.split('#')[0] + '  (protocollo ' + location.protocol + ')');
+  var ls = 'no';
+  try { window.localStorage.setItem('ipab.t', '1'); window.localStorage.removeItem('ipab.t'); ls = 'si'; } catch (e) { ls = 'NO (' + e + ')'; }
+  log('INFO', 'Funzioni: XHR=' + (typeof XMLHttpRequest) + ' JSON=' + (typeof JSON) + ' btoa=' + (typeof window.btoa) +
+      ' DOMParser=' + (typeof window.DOMParser) + ' replaceState=' + !!(window.history && history.replaceState) +
+      ' localStorage=' + ls + ' fetch=' + (typeof window.fetch) + ' Promise=' + (typeof window.Promise));
+  log('INFO', 'iOS rilevato: ' + (detectIOS() || 'non rilevato') + ' | sorgente dati: ' + (DATA_BASE || 'n/d') + (isLocal() ? ' [locale]' : '') + ' | modalità: ' + (DEVICE ? 'INSTALLAZIONE SULL’IPAD' : 'solo catalogo') + ' | server installazione: ' + (PLIST || 'non impostato'));
+  if (STATUS) { log('INFO', 'Servizio: v' + STATUS.version + ' python ' + STATUS.python + ' curl=' + STATUS.curl + ' installer=' + STATUS.installer + ' spazio libero=' + STATUS.free_mb + ' MB'); }
+  log('INFO', 'Righe: ' + DB.length + ', basi URL: ' + countKeys(URLS) + ', risultati: ' + RESULTS.length + ', pagina ' + (page + 1));
+}
+function countKeys(o) { var n = 0, k; for (k in o) { if (Object.prototype.hasOwnProperty.call(o, k)) { n++; } } return n; }
+function detectIOS() {
+  var m = /OS (\d+)_(\d+)(?:_(\d+))?/.exec(navigator.userAgent);
+  return m ? (m[1] + '.' + m[2] + (m[3] ? '.' + m[3] : '')) : '';
+}
+
+/* ------------------------------------------------------------------ *
+ * RETE
+ * ------------------------------------------------------------------ */
+function embedded(url) {
+  var id = /urls\.json$/.test(url) ? 'embUrls' : (/ipa\.json$/.test(url) ? 'embIpa' : ''), el = id ? document.getElementById(id) : null;
+  return el ? el.textContent : null;
+}
+function isEmbedded() { return !!document.getElementById('embIpa'); }
+
+function getText(url, onProgress, cb, quiet) {
+  var emb = embedded(url);
+  if (emb !== null) {
+    if (!quiet) { log('NET', 'dati incorporati nella pagina: ' + url.split('/').pop() + ' (' + emb.length + ' caratteri)'); }
+    setTimeout(function () { cb(null, emb); }, 0);
+    return;
+  }
+  var xhr, done = false, t = now();
+  function finish(err, text) { if (done) { return; } done = true; cb(err, text); }
+  try { xhr = new XMLHttpRequest(); } catch (e) { return finish('XMLHttpRequest non disponibile: ' + e); }
+  if (!quiet) { log('NET', 'GET ' + url); }
+  try { xhr.open('GET', url, true); } catch (e2) { return finish('open() fallita: ' + e2); }
+  try { xhr.timeout = 240000; } catch (e3) { /* alcuni browser lo vietano */ }
+  xhr.onreadystatechange = function () {
+    if (xhr.readyState === 2) {
+      var ct = null, cl = null;
+      try { ct = xhr.getResponseHeader('Content-Type'); cl = xhr.getResponseHeader('Content-Length'); } catch (e4) { /* CORS */ }
+      if (!quiet) log('NET', '  intestazioni dopo ' + (now() - t) + ' ms: HTTP ' + xhr.status + ', type=' + ct + ', len=' + cl);
+    }
+  };
+  xhr.onprogress = function (e) { if (onProgress) { onProgress(e.loaded, e.lengthComputable ? e.total : 0); } };
+  xhr.onload = function () {
+    var ok = (xhr.status >= 200 && xhr.status < 300) || (xhr.status === 0 && xhr.responseText);
+    if (!ok) { return finish('HTTP ' + xhr.status + ' ' + xhr.statusText); }
+    if (!quiet) log('NET', '  ok: ' + xhr.responseText.length + ' caratteri in ' + (now() - t) + ' ms');
+    finish(null, xhr.responseText);
+  };
+  xhr.onerror = function () {
+    finish('errore di rete dopo ' + (now() - t) + ' ms (server irraggiungibile, CORS bloccato, certificato TLS non accettato da iOS 9, oppure contenuto misto http/https)');
+  };
+  xhr.ontimeout = function () { finish('timeout dopo ' + (now() - t) + ' ms'); };
+  xhr.onabort = function () { finish('richiesta annullata'); };
+  try { xhr.send(); } catch (e5) { finish('send() fallita: ' + e5); }
+}
+
+/* ------------------------------------------------------------------ *
+ * STATO / MESSAGGI
+ * ------------------------------------------------------------------ */
+function setStatus(msg, isErr, retry) {
+  var el = $('status');
+  el.className = isErr ? 'err' : '';
+  el.innerHTML = esc(msg) + (retry ? '<br><button type="button" data-d="reload">Riprova</button> <button type="button" data-d="open">Apri debug</button>' : '');
+  el.hidden = !msg;
+  fixPad();
+}
+function fixPad() { $('main').style.paddingTop = ($('hdr').offsetHeight + 8) + 'px'; }
+
+/* ------------------------------------------------------------------ *
+ * CARICAMENTO DATI
+ * ------------------------------------------------------------------ */
+function normalizeDB(arr) {
+  var st = { total: arr.length, bad: 0, nullVer: 0, nullPlat: 0, noBase: 0, samples: [] };
+  var j = 0, i, r;
+  for (i = 0; i < arr.length; i++) {
+    r = arr[i];
+    if (!r || typeof r.length !== 'number' || r.length < 9) {
+      st.bad++; if (st.samples.length < 5) { st.samples.push('riga ' + i + ' malformata: ' + JSON.stringify(r)); }
+      continue;
+    }
+    if (!URLS[r[6]] || !/^https?:\/\//.test(URLS[r[6]])) {
+      st.noBase++; if (st.samples.length < 5) { st.samples.push('riga ' + i + ': base URL ' + r[6] + ' mancante/non valida'); }
+      continue;
+    }
+    if (r[1] === null || r[1] === undefined) { st.nullPlat++; }
+    if (r[5] === null || r[5] === undefined) { st.nullVer++; }
+    r[0] = +r[0] || 0;
+    r[1] = +r[1] || 0;
+    r[2] = +r[2] || 0;
+    r[3] = String(r[3] || '?');
+    r[4] = String(r[4] || '');
+    r[5] = (r[5] === null || r[5] === undefined) ? '' : String(r[5]);
+    r[7] = String(r[7] || '');
+    r[8] = +r[8] || 0;
+    arr[j++] = r;
+  }
+  arr.length = j;
+  st.kept = j;
+  return st;
+}
+
+function startLoad(bases, k, token) {
+  if (token !== loadToken) { return; }
+  if (k >= bases.length) {
+    var hint = /^(about|blob|data):$/.test(location.protocol)
+      ? ' Questa pagina è aperta in un’anteprima (protocollo «' + location.protocol + '») che blocca le connessioni esterne: scarica il file e aprilo da solo, oppure pubblicalo online.'
+      : '';
+    setStatus('Impossibile caricare l’indice da nessuna sorgente.' + hint + ' Apri il debug per i dettagli.', true, true);
+    log('ERR', 'Tutte le sorgenti dati hanno fallito: ' + bases.join(' | '));
+    return;
+  }
+  DATA_BASE = bases[k];
+  setStatus('Carico l’elenco delle sorgenti…');
+  getText(DATA_BASE + 'urls.json', null, function (err, text) {
+    if (token !== loadToken) { return; }
+    if (err) { log('ERR', 'urls.json da ' + DATA_BASE + ': ' + err); return startLoad(bases, k + 1, token); }
+    var t = now();
+    try { URLS = JSON.parse(text); } catch (e) { log('ERR', 'urls.json non è JSON valido: ' + e); return startLoad(bases, k + 1, token); }
+    log('INFO', 'urls.json: ' + countKeys(URLS) + ' voci, parse ' + (now() - t) + ' ms');
+    text = null;
+    getText(DATA_BASE + 'ipa.json', function (loaded) {
+      if (token === loadToken) { setStatus('Scarico l’indice… ' + (loaded / 1048576).toFixed(1) + ' MB (circa 9 MB in totale)'); }
+    }, function (err2, text2) {
+      if (token !== loadToken) { return; }
+      if (err2) { log('ERR', 'ipa.json da ' + DATA_BASE + ': ' + err2); return startLoad(bases, k + 1, token); }
+      setStatus('Elaboro l’indice…');
+      setTimeout(function () {
+        if (token !== loadToken) { return; }
+        var t2 = now(), arr;
+        try { arr = JSON.parse(text2); } catch (e2) {
+          log('ERR', 'ipa.json non è JSON valido (' + e2 + '). Inizio file: ' + String(text2).slice(0, 120));
+          return startLoad(bases, k + 1, token);
+        }
+        text2 = null;
+        if (!arr || typeof arr.length !== 'number') { log('ERR', 'ipa.json non è un array'); return startLoad(bases, k + 1, token); }
+        log('INFO', 'ipa.json: JSON.parse in ' + (now() - t2) + ' ms (' + arr.length + ' righe)');
+        var st = normalizeDB(arr);
+        log('INFO', 'Validazione: tenute ' + st.kept + '/' + st.total + ' | malformate ' + st.bad + ' | base URL mancante ' + st.noBase +
+            ' | piattaforma null ' + st.nullPlat + ' | versione null ' + st.nullVer);
+        for (var s = 0; s < st.samples.length; s++) { log('WARN', '  ' + st.samples[s]); }
+        if (!st.kept) { log('ERR', 'Nessuna riga valida'); return startLoad(bases, k + 1, token); }
+        DB = arr; READY = true;
+        log('INFO', 'Dati pronti da ' + DATA_BASE + (isLocal() ? ' (specchio sul PC)' : ' (direttamente dal sito)'));
+        if (DEVICE) { pollJobs(); }
+        setStatus('');
+        runSearch(true);
+      }, 20);
+    });
+  });
+}
+
+function loadData() {
+  READY = false; DB = []; URLS = {}; RESULTS = [];
+  loadToken++;
+  var token = loadToken, h = readHash(), bases = UPSTREAM_BASES.slice(0);
+  if (isEmbedded()) { startLoad([UPSTREAM_BASES[0]], 0, token); return; }
+  if (DEVICE) {
+    bases = [origin() + '/data/'];
+    waitIndex(token, function () { startLoad(bases, 0, token); });
+    return;
+  }
+  if (/^https?:$/.test(location.protocol) && !/github\.io$/.test(location.hostname)) { bases.unshift(origin() + '/data/'); }
+  if (h.data) { bases = [/\/$/.test(h.data) ? h.data : h.data + '/']; log('INFO', 'Sorgente dati forzata da #data=: ' + bases[0]); }
+  startLoad(bases, 0, token);
+}
+
+/* ------------------------------------------------------------------ *
+ * CONFIGURAZIONE (hash dell’URL, compatibile con ipaarchive.github.io)
+ * ------------------------------------------------------------------ */
+function readHash() {
+  var h = location.hash.replace(/^#/, ''), o = {}, ps, i, p, key, val;
+  if (!h) { return o; }
+  ps = h.split('&');
+  for (i = 0; i < ps.length; i++) {
+    p = ps[i]; if (!p) { continue; }
+    key = p.split('=')[0];
+    val = p.substring(key.length + 1);
+    try { val = decodeURIComponent(val.replace(/\+/g, ' ')); } catch (e) { log('WARN', 'hash non decodificabile: ' + p); }
+    o[key] = val;
+  }
+  return o;
+}
+function applyConfig(o) {
+  $('search').value = o.search || '';
+  $('bundleid').value = o.bundleid || '';
+  $('minos').value = o.minos || '';
+  $('maxos').value = o.maxos || '';
+  $('device').value = o.device || '';
+  $('unique').value = (o.unique === 'true' || o.unique === '1' || o.unique === 'on') ? 'true' : '';
+  if (o.plistServer) { setPlist(o.plistServer, false); }
+}
+function saveConfig() {
+  var parts = ['v=2'], ids = ['search', 'bundleid', 'minos', 'maxos', 'device', 'unique'], i, v, h = readHash();
+  for (i = 0; i < ids.length; i++) {
+    v = $(ids[i]).value;
+    if (v) { parts.push(ids[i] + '=' + encodeURIComponent(v)); }
+  }
+  if (page > 0) { parts.push('page=' + page); }
+  if (PLIST) { parts.push('plistServer=' + encodeURIComponent(PLIST)); }
+  if (h.data) { parts.push('data=' + encodeURIComponent(h.data)); }
+  var hash = '#' + parts.join('&');
+  try {
+    if (window.history && history.replaceState) { history.replaceState(null, '', hash); } else { location.hash = hash; }
+  } catch (e) { log('WARN', 'impossibile salvare la configurazione nell’URL: ' + e); }
+}
+
+/* ------------------------------------------------------------------ *
+ * RICERCA
+ * ------------------------------------------------------------------ */
+function verToNum(str, dflt) {
+  str = String(str || '').replace(/^\s+|\s+$/g, '');
+  if (!str) { return dflt; }
+  var x = (str + '.0.0.0').split('.'), a = parseInt(x[0], 10), b = parseInt(x[1], 10), c = parseInt(x[2], 10);
+  if (isNaN(a) || isNaN(b) || isNaN(c)) { log('WARN', 'versione iOS non valida: «' + str + '» (ignorata)'); return dflt; }
+  return a * 10000 + b * 100 + c;
+}
+function numToVer(n) {
+  if (!n) { return '?'; }
+  var major = Math.floor(n / 10000), minor = Math.floor(n / 100) % 100, patch = n % 100;
+  return major + '.' + minor + (patch ? '.' + patch : '');
+}
+function platformStr(n) {
+  if (!n) { return '?'; }
+  var a = [];
+  if (n & 2) { a.push('iPhone'); }
+  if (n & 4) { a.push('iPad'); }
+  if (n & 8) { a.push('TV'); }
+  if (n & 16) { a.push('Watch'); }
+  return a.join(', ') || ('? (' + n + ')');
+}
+function humanSize(kb) {
+  if (!kb) { return ''; }
+  var units = ['kB', 'MB', 'GB'], i = 0;
+  while (kb > 1024 && i < 2) { kb /= 1024; i++; }
+  return kb.toFixed(1) + ' ' + units[i];
+}
+
+function runSearch(restorePage, done) {
+  if (!READY) { log('WARN', 'ricerca richiesta ma i dati non sono pronti'); return; }
+  var token = ++searchToken, t = now();
+  var term = $('search').value.replace(/^\s+|\s+$/g, '').toLowerCase();
+  var bundle = $('bundleid').value.replace(/^\s+|\s+$/g, '').toLowerCase();
+  var unique = $('unique').value === 'true';
+  var minV = verToNum($('minos').value, 0), maxV = verToNum($('maxos').value, 9999999);
+  var dev = $('device').value, mask = dev ? (1 << parseInt(dev, 10)) : 0;
+  var wantPage = restorePage ? (parseInt(readHash().page, 10) || 0) : 0;
+  var desc = 'testo=«' + term + '» bundle=«' + bundle + '» iOS ' + minV + '..' + maxV + ' dispositivo=' + (dev || 'tutti') + ' una-per-app=' + unique;
+  var res = [], seen = {}, i = 0, n = DB.length, r;
+  setStatus('Ricerca…');
+  function chunk() {
+    if (token !== searchToken) { return; }
+    var end = Math.min(i + 4000, n);
+    for (; i < end; i++) {
+      r = DB[i];
+      if (r[2] < minV || r[2] > maxV) { continue; }
+      if (mask && !(r[1] & mask)) { continue; }
+      if (bundle && r[4].toLowerCase().indexOf(bundle) === -1) { continue; }
+      if (term && r[3].toLowerCase().indexOf(term) === -1 && r[4].toLowerCase().indexOf(term) === -1 && r[7].toLowerCase().indexOf(term) === -1) { continue; }
+      if (unique) { if (seen['k' + r[4]]) { continue; } seen['k' + r[4]] = true; }
+      res.push(i);
+    }
+    if (i < n) { setTimeout(chunk, 0); return; }
+    RESULTS = res; page = wantPage;
+    log('INFO', 'Ricerca: ' + res.length + ' risultati su ' + n + ' in ' + (now() - t) + ' ms [' + desc + ']');
+    setStatus('');
+    render();
+    saveConfig();
+    if (done) { done(); }
+  }
+  chunk();
+}
+
+/* ------------------------------------------------------------------ *
+ * VOCI, URL, INSTALLAZIONE
+ * ------------------------------------------------------------------ */
+function entry(idx) {
+  var r = DB[idx];
+  return {
+    idx: idx, pk: r[0], platform: r[1], minOS: r[2], title: r[3], bundle: r[4], version: r[5],
+    path: r[7], size: r[8], url: URLS[r[6]] + '/' + r[7],
+    img: isLocal() ? origin() + '/img/' + r[0] + '.jpg' : DATA_BASE + Math.floor(r[0] / 1000) + '/' + r[0] + '.jpg'
+  };
+}
+function validUrl(u) {
+  var s;
+  try { s = encodeURI(u); } catch (e) { log('WARN', 'encodeURI fallita su «' + String(u).slice(0, 80) + '»: ' + e); return u; }
+  // come il sito originale: i nomi dell'indice sono grezzi, quindi anche '%' viene codificato
+  return s.replace(/#/g, '%23').replace(/\?/g, '%3F');
+}
+function fileUrl(e) { return validUrl(e.url); }
+function utoa(str) {
+  try { return window.btoa(unescape(encodeURIComponent(str))); }
+  catch (e) { return window.btoa(unescape(encodeURIComponent(str.replace(/[\uD800-\uDFFF]/g, '?')))); }
+}
+function toB64Url(str) { return utoa(str).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, ''); }
+function fromB64Url(b) {
+  b = b.replace(/-/g, '+').replace(/_/g, '/');
+  while (b.length % 4) { b += '='; }
+  return decodeURIComponent(escape(window.atob(b)));
+}
+function installPayload(e, ipaUrl) {
+  return { u: ipaUrl, n: e.title, b: e.bundle || 'unknown.bundle', v: (e.version || '1.0').split(' ')[0] || '1.0', i: e.img };
+}
+function plistBase() { return PLIST.replace(/\/+$/, '') + '/'; }
+function installHref(e, ipaUrl) {
+  var manifest = plistBase() + '?d=' + toB64Url(JSON.stringify(installPayload(e, ipaUrl)));
+  return 'itms-services://?action=download-manifest&url=' + encodeURIComponent(manifest);
+}
+
+function itemHtml(idx) {
+  var e, ipaUrl, meta = [], btns = '';
+  try {
+    e = entry(idx);
+    ipaUrl = fileUrl(e);
+    if (e.version) { meta.push('v' + e.version); }
+    meta.push('iOS ' + numToVer(e.minOS) + '+');
+    meta.push(platformStr(e.platform));
+    if (e.size) { meta.push(humanSize(e.size)); }
+    if (DEVICE) { btns += '<button type="button" class="btn g" data-act="dinstall" data-i="' + idx + '">Installa</button>'; }
+    else if (PLIST) { btns += '<a class="btn g" data-act="install" data-i="' + idx + '" href="' + esc(installHref(e, ipaUrl)) + '">Installa</a>'; }
+    else { btns += '<a class="btn dis" data-act="needplist" href="#">Installa</a>'; }
+    if (!DEVICE) { btns += '<a class="btn" data-act="dl" data-i="' + idx + '" href="' + esc(ipaUrl) + '">Scarica</a>'; }
+    btns += '<button type="button" class="btn o" data-act="link" data-i="' + idx + '">Link</button>';
+    btns += '<button type="button" class="btn o" data-act="versions" data-i="' + idx + '">Versioni</button>';
+    return '<li class="item">' + placeholder(e) + '<img class="ic" alt="" src="' + esc(e.img) + '" onerror="IPA.imgErr(this)">' +
+      '<div class="t">' + esc(e.title) + '</div>' +
+      '<div class="m">' + esc(e.bundle) + '<br>' + esc(meta.join(' · ')) + '<br>' + esc(e.path.split('/').pop()) + '</div>' + btns +
+      '<div class="job" id="job' + e.pk + '">' + (DEVICE && JOBS[e.pk] ? jobHtml(JOBS[e.pk]) : '') + '</div></li>';
+  } catch (err) {
+    log('ERR', 'voce #' + idx + ' non visualizzabile: ' + err + (e ? ' (' + e.title + ')' : ''));
+    return '<li class="item"><div class="t">Voce #' + idx + ' non leggibile</div><div class="m">' + esc(String(err)) + '</div></li>';
+  }
+}
+
+function placeholder(e) {
+  var h = 0, i, s = e.bundle || e.title, m = /[A-Za-z0-9À-ÿ]/.exec(e.title || '');
+  for (i = 0; i < s.length; i++) { h = (h * 31 + s.charCodeAt(i)) % 360; }
+  return '<div class="ph" style="background:hsl(' + h + ',50%,58%)">' + esc(m ? m[0].toUpperCase() : '?') + '</div>';
+}
+
+function pagerHtml(pages) {
+  return '<button type="button" data-act="prev"' + (page <= 0 ? ' disabled' : '') + '>Indietro</button>' +
+    '<span>' + (page + 1) + ' / ' + pages + '</span>' +
+    '<button type="button" data-act="next"' + (page + 1 >= pages ? ' disabled' : '') + '>Avanti</button>' +
+    '<button type="button" data-act="goto">Vai a…</button>';
+}
+
+function render() {
+  var t = now(), total = RESULTS.length, pages = Math.max(1, Math.ceil(total / PER_PAGE)), i, html = '';
+  if (page >= pages) { page = pages - 1; }
+  if (page < 0) { page = 0; }
+  var from = page * PER_PAGE, to = Math.min(from + PER_PAGE, total);
+  for (i = from; i < to; i++) { html += itemHtml(RESULTS[i]); }
+  $('list').innerHTML = html;
+  var c = total + (total === 1 ? ' risultato' : ' risultati');
+  if (prevHash) { c += ' · <a href="#" data-act="back">← ricerca precedente</a>'; }
+  $('count').innerHTML = c;
+  $('pagerTop').innerHTML = $('pagerBottom').innerHTML = pagerHtml(pages);
+  $('pagerTop').hidden = $('pagerBottom').hidden = pages <= 1;
+  if (!total) { setStatus('Nessun risultato. Prova ad ampliare i filtri (iOS, dispositivo, bundle).'); }
+  window.scrollTo(0, 0);
+  log('INFO', 'Render pagina ' + (page + 1) + '/' + pages + ' (' + (to - from) + ' voci) in ' + (now() - t) + ' ms');
+}
+
+function goPage(p) {
+  var pages = Math.max(1, Math.ceil(RESULTS.length / PER_PAGE));
+  page = Math.max(0, Math.min(pages - 1, p));
+  render(); saveConfig();
+}
+
+/* ------------------------------------------------------------------ *
+ * SERVER DI INSTALLAZIONE
+ * ------------------------------------------------------------------ */
+function setPlist(url, persist) {
+  url = String(url || '').replace(/^\s+|\s+$/g, '');
+  if (url && !/^https?:\/\//i.test(url)) { url = 'http://' + url; }
+  PLIST = url;
+  $('plistServer').value = url;
+  if (persist) { try { window.localStorage.setItem('ipab.plist', url); } catch (e) { log('WARN', 'localStorage non disponibile (navigazione privata?): ' + e); } }
+}
+function testPlist() {
+  var raw = $('plistServer').value.replace(/^\s+|\s+$/g, ''), msg = $('plistmsg');
+  if (!raw) { setPlist('', true); msg.innerHTML = 'Server rimosso: il pulsante Installa è disattivato.'; render(); saveConfig(); return; }
+  setPlist(raw, true);
+  var base = plistBase(), test = { u: 'https://example.com/t.ipa', n: 'Test & <ok> "è"', b: 'test.bundle', v: '1.0', i: '' };
+  if (location.protocol === 'https:' && /^http:/i.test(base)) {
+    msg.innerHTML = 'Impostato. Test non possibile da una pagina https verso un server http (Safari blocca il contenuto misto): ciò non significa che il server sia guasto. Prova direttamente «Installa».';
+    log('WARN', 'Test server saltato: contenuto misto (pagina https, server http) ' + base);
+    render(); saveConfig(); return;
+  }
+  msg.innerHTML = 'Test in corso…';
+  getText(base + '?d=' + toB64Url(JSON.stringify(test)), null, function (err, text) {
+    if (err) { msg.innerHTML = 'Il server non risponde: ' + esc(err); log('ERR', 'Test server: ' + err); return; }
+    var okXml = false, problem = '';
+    if (text.replace(/^\s+/, '').slice(0, 5) !== '<?xml') { problem = 'la risposta non è un manifest XML (inizia con «' + text.slice(0, 40) + '»)'; }
+    else if (window.DOMParser) {
+      var doc = new DOMParser().parseFromString(text, 'application/xml');
+      if (doc.getElementsByTagName('parsererror').length) { problem = 'XML non valido (probabile mancato escape di & o <: server originale?)'; } else { okXml = true; }
+    } else { okXml = true; }
+    if (okXml && text.indexOf('software-package') === -1) { okXml = false; problem = 'manifest senza software-package'; }
+    msg.innerHTML = okXml ? 'Server OK: il manifest è valido.' : ('Problema: ' + esc(problem));
+    log(okXml ? 'INFO' : 'ERR', 'Test server ' + base + ' → ' + (okXml ? 'OK' : problem));
+    render(); saveConfig();
+  });
+}
+/* ------------------------------------------------------------------ *
+ * SERVIZIO SULL’IPAD (scarica e installa)
+ * ------------------------------------------------------------------ */
+function postJson(path, obj, cb) {
+  var xhr, done = false;
+  function finish(err, res) { if (done) { return; } done = true; cb(err, res); }
+  try { xhr = new XMLHttpRequest(); xhr.open('POST', origin() + path, true); } catch (e) { return finish('open() fallita: ' + e); }
+  xhr.setRequestHeader('Content-Type', 'application/json');
+  xhr.setRequestHeader('X-IPAB', '1');
+  try { xhr.timeout = 30000; } catch (e2) { /* ignora */ }
+  xhr.onload = function () {
+    var j = null;
+    try { j = JSON.parse(xhr.responseText); } catch (e3) { /* ignora */ }
+    if (xhr.status >= 200 && xhr.status < 300) { finish(null, j); } else { finish((j && j.error) || ('HTTP ' + xhr.status), j); }
+  };
+  xhr.onerror = function () { finish('il servizio sull’iPad non risponde (è attivo? Prova «ipabrowser restart» da terminale)'); };
+  xhr.ontimeout = function () { finish('timeout nella richiesta al servizio'); };
+  try { xhr.send(JSON.stringify(obj)); } catch (e4) { finish('send() fallita: ' + e4); }
+}
+
+function showRepoBanner() {
+  if (!/^https?:$/.test(location.protocol) || DEVICE || isEmbedded()) { return; }
+  var base = location.href.split('#')[0].split('?')[0].replace(/[^\/]*$/, '');
+  $('repoUrl').value = base;
+  $('repo').hidden = false;
+  log('INFO', 'Indirizzo della sorgente Cydia: ' + base);
+  fixPad();
+}
+
+function detectDevice(cb) {
+  if (!/^https?:$/.test(location.protocol) || isEmbedded()) { return cb(); }
+  getText(origin() + '/api/status', null, function (err, text) {
+    if (!err) {
+      try {
+        var s = JSON.parse(text);
+        if (s && s.mode === 'device') { DEVICE = true; STATUS = s; log('INFO', 'Servizio IPA Browser rilevato sull’iPad (v' + s.version + ', python ' + s.python + ')'); }
+      } catch (e) { log('WARN', '/api/status non è JSON: ' + e); }
+    } else { log('INFO', 'Nessun servizio locale (' + err + '): modalità solo catalogo'); }
+    cb();
+  }, true);
+}
+
+function waitIndex(token, cb) {
+  if (token !== loadToken) { return; }
+  getText(origin() + '/api/status', null, function (err, text) {
+    if (token !== loadToken) { return; }
+    var s = null;
+    if (!err) { try { s = JSON.parse(text); } catch (e) { s = null; } }
+    if (!s) { setStatus('Il servizio sull’iPad non risponde: ' + (err || 'risposta non valida'), true, true); log('ERR', 'waitIndex: ' + (err || 'JSON non valido')); return; }
+    STATUS = s;
+    if (s.index_ready) { return cb(); }
+    if (s.index_error && !s.index_busy) { setStatus('L’iPad non riesce a scaricare l’indice: ' + s.index_error, true, true); log('ERR', 'indice: ' + s.index_error); return; }
+    setStatus('L’iPad sta scaricando l’indice… ' + (s.index_bytes / 1048576).toFixed(1) + ' MB (circa 9 MB in totale, solo la prima volta)');
+    setTimeout(function () { waitIndex(token, cb); }, 1500);
+  }, true);
+}
+
+function jobHtml(j) {
+  var pk = j.pk, pct = j.total ? Math.min(100, Math.floor(j.bytes * 100 / j.total)) : 0;
+  var cancel = '<button type="button" class="btn o" data-act="dcancel" data-pk="' + pk + '">Annulla</button>';
+  var close = '<button type="button" class="btn o" data-act="ddismiss" data-pk="' + pk + '">Chiudi</button>';
+  if (j.state === 'queued') { return '<div class="jt">⏳ In coda…</div>' + cancel; }
+  if (j.state === 'downloading') {
+    return '<div class="jt">⬇︎ ' + esc(j.msg) + ' ' + (j.bytes / 1048576).toFixed(1) + (j.total ? ' / ' + (j.total / 1048576).toFixed(1) : '') + ' MB' + (j.total ? ' (' + pct + '%)' : '') + '</div>' +
+      '<div class="pb"><div style="width:' + pct + '%"></div></div>' + cancel;
+  }
+  if (j.state === 'installing') { return '<div class="jt">⚙︎ ' + esc(j.msg) + '… non spegnere l’iPad</div>'; }
+  if (j.state === 'done') { return '<div class="jt ok">✓ Installata. Cerca l’icona nella schermata Home (se non appare, fai un respring).</div>' + close; }
+  if (j.state === 'cancelled') { return '<div class="jt">Annullata.</div>' + close; }
+  return '<div class="jt bad">✗ ' + esc(j.msg) + '</div>' + close;
+}
+
+function updateJobBoxes() {
+  var k, el;
+  for (k in JOBS) {
+    if (Object.prototype.hasOwnProperty.call(JOBS, k)) {
+      el = $('job' + k);
+      if (el) { el.innerHTML = jobHtml(JOBS[k]); }
+    }
+  }
+}
+
+function pollJobs() {
+  if (!DEVICE) { return; }
+  if (jobTimer) { clearTimeout(jobTimer); jobTimer = null; }
+  getText(origin() + '/api/jobs', null, function (err, text) {
+    var active = false, list = [], i, j, old = JOBS, k;
+    if (err) {
+      jobFails++;
+      if (jobFails <= 2) { log('WARN', 'impossibile leggere i lavori: ' + err); }
+    } else {
+      jobFails = 0;
+      try { list = JSON.parse(text); } catch (e) { log('ERR', 'risposta /api/jobs non valida: ' + e); }
+      JOBS = {};
+      for (i = 0; i < list.length; i++) {
+        j = list[i]; JOBS[j.pk] = j;
+        if (j.state === 'queued' || j.state === 'downloading' || j.state === 'installing') { active = true; }
+        if (!old[j.pk] || old[j.pk].state !== j.state) { log('INFO', 'Lavoro ' + j.pk + ' «' + j.title + '»: ' + j.state + ' – ' + j.msg); }
+      }
+      for (k in old) { if (Object.prototype.hasOwnProperty.call(old, k) && !JOBS[k] && $('job' + k)) { $('job' + k).innerHTML = ''; } }
+      updateJobBoxes();
+    }
+    if (active || (err && jobFails < 5)) { jobTimer = setTimeout(pollJobs, active ? 1000 : 3000); }
+  }, true);
+}
+
+function showJobMsg(pk, msg, bad) {
+  var el = $('job' + pk);
+  if (el) { el.innerHTML = '<div class="jt' + (bad ? ' bad' : '') + '">' + (bad ? '✗ ' : '') + esc(msg) + '</div>'; }
+}
+
+function startInstall(idx) {
+  var pk = DB[idx][0];
+  function go() {
+    postJson('/api/install', { pk: pk }, function (err, res) {
+      if (err) { log('ERR', 'Installa ' + pk + ': ' + err); showJobMsg(pk, err, true); return; }
+      log('INFO', 'Installazione avviata per ' + pk + (res.new ? '' : ' (già in corso)'));
+      JOBS[pk] = res.job; updateJobBoxes(); pollJobs();
+    });
+  }
+  if (STATUS && STATUS.installer && STATUS.curl) { return go(); }
+  showJobMsg(pk, 'Controllo il servizio…');
+  getText(origin() + '/api/status', null, function (err, text) {
+    try { STATUS = JSON.parse(text); } catch (e) { showJobMsg(pk, 'Il servizio non risponde: ' + (err || e), true); return; }
+    if (!STATUS.curl) { showJobMsg(pk, 'Manca curl: installa il pacchetto «curl» da Cydia, poi riprova.', true); return; }
+    if (!STATUS.installer) { showJobMsg(pk, 'Manca l’installer: installa «IPA Installer Console» (ipainstaller) da Cydia, poi riprova.', true); return; }
+    go();
+  }, true);
+}
+
+function jobAction(path, pk) {
+  postJson(path, { pk: parseInt(pk, 10) }, function (err) {
+    if (err) { log('ERR', path + ' ' + pk + ': ' + err); return; }
+    if (path === '/api/dismiss') { delete JOBS[pk]; if ($('job' + pk)) { $('job' + pk).innerHTML = ''; } }
+    pollJobs();
+  });
+}
+
+/* ------------------------------------------------------------------ *
+ * DIAGNOSTICA
+ * ------------------------------------------------------------------ */
+function selfTest() {
+  if (!READY) { log('WARN', 'Autotest: dati non pronti'); return; }
+  var i = 0, n = DB.length, t = now(), fail = 0, badUrl = 0, rt = 0, maxLen = 0, samples = [];
+  log('INFO', 'Autotest: controllo ' + n + ' voci (URL, codifica, round-trip base64)…');
+  function chunk() {
+    var end = Math.min(i + 2000, n), e, u, p, b, back;
+    for (; i < end; i++) {
+      try {
+        e = entry(i); u = validUrl(e.url);
+        if (!/^https?:\/\/[^\s]+$/.test(u)) { badUrl++; if (samples.length < 6) { samples.push('URL anomalo #' + i + ': ' + u.slice(0, 110)); } }
+        p = installPayload(e, u); b = toB64Url(JSON.stringify(p));
+        if (b.length > maxLen) { maxLen = b.length; }
+        back = JSON.parse(fromB64Url(b));
+        if (back.n !== p.n || back.u !== p.u || back.b !== p.b || back.v !== p.v) { rt++; if (samples.length < 6) { samples.push('round-trip diverso #' + i + ' ' + p.n); } }
+      } catch (err) { fail++; if (samples.length < 6) { samples.push('eccezione #' + i + ': ' + err); } }
+    }
+    if (i < n) { setStatus('Autotest… ' + Math.round(i * 100 / n) + '%'); setTimeout(chunk, 0); return; }
+    setStatus('');
+    var ok = !fail && !badUrl && !rt;
+    log(ok ? 'INFO' : 'ERR', 'Autotest ' + (ok ? 'SUPERATO' : 'FALLITO') + ' in ' + (now() - t) + ' ms: eccezioni=' + fail + ' URL anomali=' + badUrl + ' round-trip=' + rt + ' payload max=' + maxLen + ' car.');
+    for (var s = 0; s < samples.length; s++) { log('WARN', '  ' + samples[s]); }
+  }
+  chunk();
+}
+function linkTest() {
+  if (!RESULTS.length) { log('WARN', 'Test link: nessun risultato'); return; }
+  var e = entry(RESULTS[0]), u = validUrl(e.url), xhr = new XMLHttpRequest(), t = now();
+  log('NET', 'Test link (HEAD) ' + u);
+  try {
+    xhr.open('HEAD', u, true);
+    xhr.onload = function () { log('INFO', 'Test link: HTTP ' + xhr.status + ' in ' + (now() - t) + ' ms → il server del file risponde'); };
+    xhr.onerror = function () { log('WARN', 'Test link: richiesta bloccata dopo ' + (now() - t) + ' ms. Può essere solo CORS (archive.org non lo permette sempre): non prova che il file manchi. Verifica con «Scarica».'); };
+    xhr.send();
+  } catch (err) { log('ERR', 'Test link: ' + err); }
+}
+
+/* ------------------------------------------------------------------ *
+ * EVENTI
+ * ------------------------------------------------------------------ */
+function resetForm() {
+  applyConfig({ maxos: detectIOS() || DEFAULT_MAXOS });
+  $('plistServer').value = PLIST;
+}
+function triggerSearch() {
+  try { document.activeElement.blur(); } catch (e) { /* ignora */ }
+  $('filters').hidden = true; fixPad();
+  runSearch(false);
+}
+
+document.addEventListener('click', function (ev) {
+  var el = ev.target, act = null, d = null, guard = 0;
+  while (el && el !== document && guard++ < 6) {
+    if (el.getAttribute) { act = act || el.getAttribute('data-act'); d = d || el.getAttribute('data-d'); if (act || d) { break; } }
+    el = el.parentNode;
+  }
+  if (d) {
+    if (d === 'close') { closeDbg(); }
+    else if (d === 'open') { openDbg(); }
+    else if (d === 'clear') { LOG = []; errCount = 0; updateBadge(); renderLog(); }
+    else if (d === 'select') { var ta = $('dbglog'); ta.removeAttribute('readonly'); ta.focus(); ta.select(); try { ta.setSelectionRange(0, 9999999); } catch (e1) { /* ignora */ } ta.setAttribute('readonly', 'readonly'); }
+    else if (d === 'env') { envInfo(); }
+    else if (d === 'selftest') { selfTest(); }
+    else if (d === 'linktest') { linkTest(); }
+    else if (d === 'reload') {
+      log('INFO', 'Ricarico i dati su richiesta'); setStatus('Ricarico…');
+      if (DEVICE && STATUS && STATUS.index_error) { postJson('/api/refresh', {}, function (err) { if (err) { log('ERR', 'refresh: ' + err); } loadData(); }); }
+      else { loadData(); }
+    }
+    else if (d === 'svclog') { getText(origin() + '/api/log', null, function (err, text) { if (err) { log('ERR', 'log del servizio: ' + err); return; } log('SVC', '--- log del servizio sull’iPad (ultime righe) ---\n' + text); }, true); }
+    return;
+  }
+  if (!act) { return; }
+  var idx = parseInt(el.getAttribute('data-i'), 10);
+  if (act === 'install') { log('INFO', 'Installa #' + idx + ' «' + DB[idx][3] + '» → ' + el.getAttribute('href').slice(0, 160) + '…'); return; }
+  if (act === 'dl') { log('INFO', 'Scarica #' + idx + ' → ' + el.getAttribute('href')); return; }
+  ev.preventDefault();
+  if (act === 'needplist') { $('filters').hidden = false; fixPad(); $('plistmsg').innerHTML = 'Inserisci qui l’indirizzo del server di installazione e tocca «Testa».'; }
+  else if (act === 'dinstall') { startInstall(idx); }
+  else if (act === 'dcancel') { jobAction('/api/cancel', el.getAttribute('data-pk')); }
+  else if (act === 'ddismiss') { jobAction('/api/dismiss', el.getAttribute('data-pk')); }
+  else if (act === 'link') { window.prompt('Copia questo link:', fileUrl(entry(idx))); }
+  else if (act === 'versions') {
+    prevHash = location.hash;
+    $('bundleid').value = DB[idx][4]; $('search').value = ''; $('unique').value = '';
+    log('INFO', 'Tutte le versioni di ' + DB[idx][4]);
+    runSearch(false);
+  }
+  else if (act === 'back') { var h = prevHash; prevHash = ''; try { history.replaceState(null, '', h || '#v=2'); } catch (e2) { location.hash = h; } applyConfig(readHash()); runSearch(true); }
+  else if (act === 'prev') { goPage(page - 1); }
+  else if (act === 'next') { goPage(page + 1); }
+  else if (act === 'goto') {
+    var pages = Math.max(1, Math.ceil(RESULTS.length / PER_PAGE)), v = window.prompt('Vai a pagina (1–' + pages + '):', String(page + 1));
+    if (v !== null && !isNaN(parseInt(v, 10))) { goPage(parseInt(v, 10) - 1); }
+  }
+}, false);
+
+$('btnFilters').addEventListener('click', function () { $('filters').hidden = !$('filters').hidden; fixPad(); }, false);
+$('btnDbg').addEventListener('click', function () { if (dbgOpen) { closeDbg(); } else { openDbg(); } }, false);
+$('btnApply').addEventListener('click', triggerSearch, false);
+$('btnRepoHide').addEventListener('click', function () { $('repo').hidden = true; fixPad(); }, false);
+$('btnReset').addEventListener('click', function () { resetForm(); triggerSearch(); }, false);
+$('btnPlist').addEventListener('click', testPlist, false);
+$('searchform').addEventListener('submit', function (ev) { ev.preventDefault(); triggerSearch(); }, false);
+$('search').addEventListener('keyup', function (ev) { if (ev.keyCode === 13) { triggerSearch(); } }, false);
+window.addEventListener('resize', fixPad, false);
+
+window.IPA = {
+  imgErr: function (img) { img.style.visibility = 'hidden'; if (imgErrs++ < 3) { log('WARN', 'icona non caricata: ' + img.src); } },
+  _s: function () { return { DB: DB, URLS: URLS, RESULTS: RESULTS, page: page, ready: READY, plist: PLIST }; },
+  entry: entry, validUrl: validUrl, toB64Url: toB64Url, fromB64Url: fromB64Url, installPayload: installPayload,
+  installHref: installHref, fileUrl: fileUrl, jobs: function () { return JOBS; }, status: function () { return STATUS; }, pollJobs: function () { pollJobs(); }, runSearch: runSearch, selfTest: selfTest, log: log, getLog: function () { return LOG; },
+  setPlist: setPlist, goPage: goPage, render: render, verToNum: verToNum, PER_PAGE: PER_PAGE
+};
+
+/* ------------------------------------------------------------------ *
+ * AVVIO
+ * ------------------------------------------------------------------ */
+log('INFO', 'IPA Browser ' + APP_VERSION + ' avviato');
+(function init() {
+  var h = readHash(), saved = '';
+  if (!h.v && !h.search && !h.maxos && !h.device) { h.maxos = detectIOS() || DEFAULT_MAXOS; log('INFO', 'Prima visita: limite iOS preimpostato a ' + h.maxos); }
+  try { saved = window.localStorage.getItem('ipab.plist') || ''; } catch (e) { /* ignora */ }
+  if (!h.plistServer && saved) { h.plistServer = saved; }
+  applyConfig(h);
+  if (!$('device').value && h.device) { log('WARN', 'valore device non riconosciuto: ' + h.device); }
+  fixPad();
+  if (/^(about|blob|data):$/.test(location.protocol)) { log('ERR', 'ANTEPRIMA RILEVATA (protocollo ' + location.protocol + '): qui le connessioni esterne sono bloccate. Scarica index.html e aprilo da solo (file:///…) o pubblicalo online.'); }
+  envInfo();
+  detectDevice(function () { envInfo(); showRepoBanner(); loadData(); });
+})();
+
+})();
+</script>
+</body>
+</html>

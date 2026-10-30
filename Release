@@ -1,0 +1,17 @@
+Origin: IPA Browser
+Label: IPA Browser
+Suite: stable
+Version: 1.0
+Codename: ios
+Date: Tue, 27 Oct 2026 19:17:18 GMT
+Architectures: iphoneos-arm
+Components: main
+Description: IPA Browser - cerca e installa app direttamente dall'iPad
+MD5Sum:
+ 6944222ec4dccba88895be0ee7264c24              540 Packages
+ a32e7a1fbafe35a1f4d5206311caef06              372 Packages.gz
+ 7758b8cf99512ac7cad176af99e5d886              406 Packages.bz2
+SHA256:
+ 745d6de46e437ac288f2914fdc5b322a6a1d68f856deade873ef8f32e12510fe              540 Packages
+ be26bc57c3c3cde91e9a40b646b83db6172a13c73f58632f1ff3e50d0ce6dfd5              372 Packages.gz
+ f75487d5fe5014fba5ce040e7d8b4178fd3736d419f97380250f466a39e24afb              406 Packages.bz2
